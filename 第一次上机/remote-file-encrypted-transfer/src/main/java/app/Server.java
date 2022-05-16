@@ -3,7 +3,6 @@ package app;
 import cypher.AES;
 import cypher.DH;
 
-import java.awt.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
