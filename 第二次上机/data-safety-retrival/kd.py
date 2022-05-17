@@ -32,12 +32,14 @@ class KDTree:
         return parent_node
 
     def nearest(self, x):
+        self.nearest_node = None  # 最近邻点
+        self.nearest_dis = np.inf  # 无穷大
         def visit(node):
             if node is not None:
                 # 分左右或上下
                 dis = node.data[node.sp] - x[node.sp]
                 # 访问子节点
-                visit(node.left if dis > 0 else node.right)
+                visit(node.left if dis >= 0 else node.right)
                 # 查看当前子节点到目标节点的距离，二范数求距离
                 cur_dis = np.linalg.norm(x - node.data, 2)
                 # 更新节点
@@ -49,7 +51,7 @@ class KDTree:
                     visit(node.left if dis < 0 else node.right)
 
         # 从根节点查找
-        node = self.root
-        visit(node)
+        root = self.root
+        visit(root)
 
         return self.nearest_node.data, self.nearest_dis
