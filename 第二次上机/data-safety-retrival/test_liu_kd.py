@@ -1,22 +1,19 @@
 import numpy as np
+import random
 import liu
 import kd
 
 
 # 公共对象
+import utils
+
 ope = liu.Liu()
 kdtree = None
 
 
 # 读取 NE 数据集
-def get_data(path):
-    with open(path, 'r') as f:
-        data = f.readlines()
-        # 浮点数数组
-        float_data = np.empty([len(data), 2], dtype=float)
-        for i in range(len(data)):
-            nums = data[i].split()
-            float_data[i] = np.array(list(map(float, nums)))
+def get_data():
+    float_data = utils.get_ne()
 
     int_data = float_data * 10 ** 6
     int_data = int_data.astype(int)
@@ -38,19 +35,19 @@ def enc_data(data):
 
 # 输入查找点
 def get_p():
-    # 输入查找点，0.0 - 0.8
-    float_p = None
-    try:
-        ss = input('\n输入查找点，比如 0.059776 0.455814\n')
-        ss = np.array(ss.split())
-        float_p = ss.astype(float)
-    except IndexError:
-        print('输出不正确，重新输入')
+    # 随机生成点
+    float_p = np.array([random.random(), random.random()])
 
     int_p = float_p * 10 ** 6
-    int_p = int_p.astype(int)
+    int_p = int_p.astype('int64')
 
     return int_p
+
+
+# 从数据集中查找点
+def get_data_p(data):
+    index = random.randrange(0, len(data) - 1)
+    return data[index]
 
 
 # 建立 kd 树，并查找最近邻点
@@ -81,7 +78,7 @@ def iterate_nearest(data, p):
 # 主方法
 def main():
     # 读取数据
-    data = get_data('NE.txt')
+    data = get_data()
     print('data:\n', data)
 
     # 对每个元素进行揭序加密
@@ -93,20 +90,30 @@ def main():
     global kdtree
     kdtree = kd.KDTree(en_data)
 
-    while 1:
+    # 测试
+    tests = 100
+    cnt = 0
+    for i in range(tests):
         # 输入要查找的 p 点
         p = get_p()
+        # p = get_data_p(data)
         print('p:\n', p)
 
         # 在 kd 树上搜索最近邻点
-        kd_node, kd_index = kd_nearest(en_data, noise, p)
+        kd_node, kd_dis = kd_nearest(en_data, noise, p)
         print('kd nearest node:\n', kd_node)
-        print('kd index:\n', kd_index)
 
         # 暴力查找最近邻点
-        iterate_node, iterate_index = iterate_nearest(data, p)
+        iterate_node, iterate_dis = utils.iterate_nearest(data, p)
         print('iterate nearest node:\n', iterate_node)
-        print('iterate index:\n', iterate_index)
+
+        distance = np.linalg.norm(kd_node - iterate_node, 2)
+        print('distance:\n', distance)
+
+        if distance == 0:
+            cnt += 1
+
+    print('Succeded in: %d out of %d tests.' % (cnt, tests))
 
 
 if __name__ == '__main__':
