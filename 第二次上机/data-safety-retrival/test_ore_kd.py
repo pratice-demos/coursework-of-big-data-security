@@ -1,22 +1,18 @@
 import numpy as np
+import random
 import ore
 import kd
+import utils
 
-# 公共对象
+
 o = ore.Ore()
 kdtree = None
 str_len = 6
 
 
 # 读取 NE 数据集，返回浮点数二维数组和 10 进制字符串数组
-def get_data(path):
-    with open(path, 'r') as f:
-        data = f.readlines()
-        # 浮点数数组
-        float_data = np.empty([len(data), 2], dtype=float)
-        for i in range(len(data)):
-            nums = data[i].split()
-            float_data[i] = np.array(list(map(float, nums)))
+def get_data():
+    float_data = utils.get_ne()
 
     int_data = float_data * 10 ** str_len
     int_data = int_data.astype('int64')
@@ -43,15 +39,10 @@ def enc_data(str_data):
     return en_int_data
 
 
-# 输入查找点
+# 随机生成查找点，范围位于 0.01 - 1.00
 def get_p():
-    # 输入查找点，0.0 - 0.8
-    try:
-        ss = input('\n输入查找点，比如 0.059776 0.455814\n')
-        ss = np.array(ss.split())
-        float_p = ss.astype(float)
-    except IndexError:
-        print('输出不正确，重新输入')
+    # 随机生成点
+    float_p = np.array([random.random(), random.random()])
 
     int_p = float_p * 10 ** str_len
     int_p = int_p.astype('int64')
@@ -61,6 +52,12 @@ def get_p():
     )))
 
     return int_p, str_p
+
+
+# 从数据集中随机返回明文点
+def get_data_p(int_data, str_data):
+    index = random.randrange(0, len(int_data) - 1)
+    return int_data[index], str_data[index]
 
 
 # 将明文点加密
@@ -115,7 +112,7 @@ def iterate_nearest(int_data, int_p):
 # 主方法
 def main():
     # 读取数据
-    int_data, str_data = get_data('NE.txt')
+    int_data, str_data = get_data()
     print('int_data:\n', int_data)
 
     # 对每个元素进行揭序加密
@@ -126,9 +123,13 @@ def main():
     global kdtree
     kdtree = kd.KDTree(en_int_data)
 
-    while 1:
-        # 输入要查找的 p 点
+    # 测试
+    tests = 100
+    cnt = 0
+    for i in range(tests):
+        # 查找的 p 点
         int_p, str_p = get_p()
+        # int_p, str_p = get_data_p(int_data, str_data)
         print('int_p:\n', int_p)
 
         # 加密 p 点
@@ -144,15 +145,17 @@ def main():
         print('kd nearest node:\n', int_node)
 
         # 暴力查找最近邻点
-        iterate_node, iterate_dis = iterate_nearest(int_data, int_p)
+        iterate_node, iterate_dis = utils.iterate_nearest(int_data, int_p)
         print('iterate nearest node:\n', iterate_node)
 
-        en_iterate_node, en_iterate_dis = iterate_nearest(en_int_node, en_int_p)
-        print('en iterate nearest node:\n', en_iterate_node)
+        distance = np.linalg.norm(int_node - iterate_node, 2)
+        print('distance:\n', distance)
+
+        if distance == 0:
+            cnt += 1
+
+    print('Succeded in: %d out of %d tests.' % (cnt, tests))
 
 
 if __name__ == '__main__':
     main()
-
-
-# TODO ore 加密不能保证明文和密文欧式距离上的偏序关系相同，因此 kd 树不能使用，需改用泰森多边形
