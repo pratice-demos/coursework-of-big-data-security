@@ -60,21 +60,6 @@ def kd_nearest(en_data, noise, p):
     return node, index
 
 
-# 暴力搜索最近邻点
-def iterate_nearest(data, p):
-    dis = np.inf
-    node = None
-    index = None
-    for i in range(len(data)):
-        tmp_dis = np.linalg.norm(data[i] - p, 2)
-        if dis > tmp_dis:
-            dis = tmp_dis
-            node = data[i]
-            index = i
-
-    return node, index
-
-
 # 主方法
 def main():
     # 读取数据
